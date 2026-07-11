@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>월례 골프회 스코어보드</title>
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Archivo:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --fairway:#1E4D3B;      /* 짙은 페어웨이 그린 */
+    --fairway-deep:#143529;
+    --paper:#FBF7EC;        /* 스코어카드 종이색 */
+    --paper-line:#E4DAC4;
+    --ink:#22312A;
+    --ink-soft:#5C6B62;
+    --flag:#D9522C;         /* 깃발 레드 */
+    --gold:#B8912E;
+    --silver:#8C97A0;
+    --bronze:#A6764B;
+    --radius:14px;
+    --shadow:0 2px 10px rgba(20,53,41,.10);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:'Apple SD Gothic Neo','Pretendard','Malgun Gothic',sans-serif;
+    background:var(--paper);
+    color:var(--ink);
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+  }
+  .num{font-family:'Archivo',sans-serif;font-variant-numeric:tabular-nums}
+
+  /* ── 헤더 ── */
+  header{
+    background:linear-gradient(160deg,var(--fairway) 0%,var(--fairway-deep) 100%);
+    color:#F3EFE2;
+    padding:26px 20px 20px;
+  }
+  .head-inner{max-width:860px;margin:0 auto}
+  .club-eyebrow{font-size:12px;letter-spacing:.22em;color:#BFD3C4;text-transform:uppercase}
+  h1{font-family:'Gowun Batang',serif;font-size:27px;font-weight:700;margin-top:6px}
+  h1 .flagdot{color:var(--flag)}
+  .head-sub{font-size:13px;color:#A8C0AE;margin-top:6px}
+
+  /* ── 탭 ── */
+  nav{
+    background:var(--fairway-deep);
+    position:sticky;top:0;z-index:20;
+  }
+  .tabs{max-width:860px;margin:0 auto;display:flex}
+  .tab{
+    flex:1;padding:13px 4px;text-align:center;font-size:14px;font-weight:600;
+    color:#9DB8A4;background:none;border:none;cursor:pointer;
+    border-bottom:3px solid transparent;transition:.15s;
+  }
+  .tab:focus-visible{outline:2px solid var(--gold);outline-offset:-2px}
+  .tab.active{color:#FBF7EC;border-bottom-color:var(--flag)}
+
+  main{max-width:860px;margin:0 auto;padding:20px 16px 80px}
+  section{display:none}
+  section.show{display:block}
+
+  .card{
+    background:#fff;border:1px solid var(--paper-line);
+    border-radius:var(--radius);box-shadow:var(--shadow);
+    padding:18px;margin-bottom:16px;
+  }
+  .card h2{
+    font-family:'Gowun Batang',serif;font-size:18px;margin-bottom:12px;
+    display:flex;align-items:center;gap:8px;
+  }
+  .card h2::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--flag);flex:none}
+
+  /* ── 폼 요소 ── */
+  label{font-size:12.5px;font-weight:600;color:var(--ink-soft);display:block;margin-bottom:5px}
+  input[type=text],input[type=date],input[type=number],select{
+    width:100%;padding:10px 12px;font-size:15px;color:var(--ink);
+    border:1.5px solid var(--paper-line);border-radius:10px;background:#FDFBF5;
+    font-family:inherit;
+  }
+  input:focus,select:focus{outline:none;border-color:var(--fairway)}
+  .row{display:flex;gap:10px;flex-wrap:wrap}
+  .row>div{flex:1;min-width:130px}
+  .btn{
+    display:inline-flex;align-items:center;justify-content:center;gap:6px;
+    padding:11px 18px;border-radius:10px;font-size:14.5px;font-weight:700;
+    border:none;cursor:pointer;font-family:inherit;transition:.15s;
+  }
+  .btn:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+  .btn-primary{background:var(--fairway);color:#F3EFE2}
+  .btn-primary:hover{background:var(--fairway-deep)}
+  .btn-flag{background:var(--flag);color:#fff}
+  .btn-ghost{background:none;color:var(--ink-soft);border:1.5px solid var(--paper-line)}
+  .btn-sm{padding:6px 11px;font-size:12.5px;border-radius:8px}
+  .btn-danger{background:none;color:var(--flag);border:1.5px solid #F0C4B4}
+
+  /* ── 순위표 ── */
+  .season-bar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+  .season-bar select{width:auto;min-width:110px}
+  .mode-pill{
+    display:flex;background:#EFEADD;border-radius:99px;padding:3px;
+  }
+  .mode-pill button{
+    border:none;background:none;padding:7px 16px;border-radius:99px;
+    font-size:13px;font-weight:700;color:var(--ink-soft);cursor:pointer;font-family:inherit;
+  }
+  .mode-pill button.on{background:var(--fairway);color:#F3EFE2}
+
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  th{
+    text-align:center;padding:9px 6px;font-size:11.5px;letter-spacing:.06em;
+    color:var(--ink-soft);border-bottom:2px solid var(--fairway);
+    white-space:nowrap;
+  }
+  td{padding:11px 6px;text-align:center;border-bottom:1px solid var(--paper-line)}
+  td.name{text-align:left;font-weight:700;white-space:nowrap}
+  tr:last-child td{border-bottom:none}
+  .rank-badge{
+    display:inline-flex;align-items:center;justify-content:center;
+    width:30px;height:30px;border-radius:50%;font-weight:800;font-size:14px;
+    background:#EFEADD;color:var(--ink-soft);
+  }
+  .rank-1{background:var(--gold);color:#fff}
+  .rank-2{background:var(--silver);color:#fff}
+  .rank-3{background:var(--bronze);color:#fff}
+  .best{color:var(--flag);font-weight:700}
+  .muted{color:var(--ink-soft);font-size:12.5px}
+
+  /* ── 라운드 카드 (스코어카드 스타일) ── */
+  .round-card{
+    background:#FDFBF5;border:1px solid var(--paper-line);border-radius:var(--radius);
+    margin-bottom:12px;overflow:hidden;
+  }
+  .round-head{
+    display:flex;align-items:center;gap:12px;padding:14px 16px;cursor:pointer;
+    background:none;border:none;width:100%;text-align:left;font-family:inherit;
+  }
+  .round-head:focus-visible{outline:2px solid var(--gold);outline-offset:-2px}
+  .round-date{
+    background:var(--fairway);color:#F3EFE2;border-radius:10px;
+    padding:7px 10px;text-align:center;line-height:1.15;flex:none;
+  }
+  .round-date .d{font-size:17px;font-weight:800}
+  .round-date .m{font-size:10.5px;color:#BFD3C4}
+  .round-info{flex:1;min-width:0}
+  .round-course{font-weight:700;font-size:15px}
+  .round-winner{font-size:12.5px;color:var(--ink-soft);margin-top:2px}
+  .round-winner b{color:var(--flag)}
+  .chev{color:var(--ink-soft);transition:.2s;flex:none}
+  .round-card.open .chev{transform:rotate(180deg)}
+  .round-body{display:none;padding:0 16px 14px}
+  .round-card.open .round-body{display:block}
+  .scoretable{background:#fff;border:1px solid var(--paper-line);border-radius:10px;overflow:hidden}
+  .scoretable table{font-size:13.5px}
+  .round-actions{margin-top:10px;text-align:right}
+
+  /* ── 멤버 리스트 ── */
+  .member-row{
+    display:flex;align-items:center;gap:10px;padding:11px 0;
+    border-bottom:1px solid var(--paper-line);
+  }
+  .member-row:last-child{border-bottom:none}
+  .avatar{
+    width:38px;height:38px;border-radius:50%;background:var(--fairway);
+    color:#F3EFE2;display:flex;align-items:center;justify-content:center;
+    font-weight:800;font-size:15px;flex:none;
+  }
+  .member-name{flex:1;font-weight:700;font-size:15px}
+  .hcp-input{width:64px !important;text-align:center;padding:7px 6px !important}
+
+  /* ── 기타 ── */
+  .empty{
+    text-align:center;padding:36px 16px;color:var(--ink-soft);font-size:14px;line-height:1.7;
+  }
+  .empty .tee{font-size:34px}
+  .toast{
+    position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(80px);
+    background:var(--ink);color:#FBF7EC;padding:11px 20px;border-radius:99px;
+    font-size:13.5px;font-weight:600;box-shadow:0 6px 20px rgba(0,0,0,.25);
+    transition:.3s;z-index:99;opacity:0;
+  }
+  .toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+  .note{font-size:12px;color:var(--ink-soft);line-height:1.65;margin-top:10px}
+  .loading{text-align:center;padding:60px 0;color:var(--ink-soft)}
+  .score-input-table td{padding:7px 4px}
+  .score-input-table input{text-align:center;padding:9px 4px !important;font-family:'Archivo';font-weight:600}
+  .sum-cell{font-family:'Archivo';font-weight:800;font-size:16px}
+  @media(max-width:520px){
+    h1{font-size:22px}
+    th,td{padding:9px 4px;font-size:13px}
+    .hide-sm{display:none}
+  }
+  @media(prefers-reduced-motion:reduce){
+    *{transition:none !important}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="head-inner">
+    <div class="club-eyebrow">Monthly Golf Society</div>
+    <h1>월례 골프회 스코어보드 <span class="flagdot">⛳</span></h1>
+    <div class="head-sub" id="headSub">함께 기록하고, 함께 겨루는 우리 모임의 시즌 랭킹</div>
+  </div>
+</header>
+
+<nav>
+  <div class="tabs" role="tablist">
+    <button class="tab active" data-tab="rank" role="tab">🏆 순위표</button>
+    <button class="tab" data-tab="rounds" role="tab">📋 라운드 기록</button>
+    <button class="tab" data-tab="members" role="tab">👥 멤버 · 설정</button>
+  </div>
+</nav>
+
+<main>
+  <div class="loading" id="loading">기록을 불러오는 중입니다…</div>
+
+  <!-- ══ 순위표 ══ -->
+  <section id="tab-rank">
+    <div class="card">
+      <div class="season-bar">
+        <div>
+          <label for="seasonSel">시즌</label>
+          <select id="seasonSel"></select>
+        </div>
+        <div style="flex:1"></div>
+        <div>
+          <label>순위 기준</label>
+          <div class="mode-pill" id="modePill">
+            <button data-mode="gross" class="on">그로스</button>
+            <button data-mode="net">넷(핸디)</button>
+            <button data-mode="point">포인트</button>
+          </div>
+        </div>
+      </div>
+      <div id="leaderboard"></div>
+      <div class="note" id="rankNote"></div>
+    </div>
+  </section>
+
+  <!-- ══ 라운드 기록 ══ -->
+  <section id="tab-rounds">
+    <div class="card">
+      <h2>새 라운드 입력</h2>
+      <div class="row" style="margin-bottom:12px">
+        <div><label for="rDate">날짜</label><input type="date" id="rDate"></div>
+        <div style="flex:2"><label for="rCourse">골프장</label><input type="text" id="rCourse" placeholder="예: 남서울CC"></div>
+      </div>
+      <div id="scoreEntry"></div>
+      <div style="margin-top:14px;text-align:right">
+        <button class="btn btn-flag" id="saveRoundBtn">라운드 저장</button>
+      </div>
+      <div class="note">참석하지 않은 멤버는 비워 두면 자동으로 불참 처리됩니다. 전반·후반 타수를 각각 입력하면 합계가 자동 계산됩니다.</div>
+    </div>
+
+    <div class="card">
+      <h2>라운드 히스토리</h2>
+      <div id="roundList"></div>
+    </div>
+  </section>
+
+  <!-- ══ 멤버 · 설정 ══ -->
+  <section id="tab-members">
+    <div class="card">
+      <h2>멤버 관리</h2>
+      <div id="memberList"></div>
+      <div class="row" style="margin-top:14px;align-items:flex-end">
+        <div style="flex:2"><label for="newName">이름</label><input type="text" id="newName" placeholder="새 멤버 이름"></div>
+        <div><label for="newHcp">핸디캡</label><input type="number" id="newHcp" value="0" min="0" max="54"></div>
+        <div style="flex:none"><button class="btn btn-primary" id="addMemberBtn">추가</button></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>핸디캡 방식</h2>
+      <div class="mode-pill" id="hcpPill" style="display:inline-flex">
+        <button data-hcp="manual" class="on">수동 입력</button>
+        <button data-hcp="auto">자동 산출</button>
+      </div>
+      <div class="note">
+        <b>수동 입력</b>: 멤버 관리에서 정한 핸디를 그대로 사용합니다.<br>
+        <b>자동 산출</b>: 최근 5개 라운드 평균 그로스를 기준으로 (평균 − 72) × 0.8을 반올림해 적용합니다. 기록이 쌓일수록 자동으로 갱신됩니다.
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>포인트 배점</h2>
+      <div class="note" style="margin-top:0">
+        라운드마다 순위에 따라 <b>1위 10점 · 2위 7점 · 3위 5점 · 4위 3점 · 5위 이하 1점</b>이 쌓입니다.
+        동타는 같은 순위로 처리되어 같은 점수를 받습니다. 넷(핸디) 기준 순위로 배점됩니다.
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>데이터</h2>
+      <div class="note" style="margin-top:0">
+        모든 기록은 이 앱을 여는 멤버 모두에게 <b>공유</b>됩니다. 누구든 입력하면 전원의 순위표에 바로 반영됩니다.
+      </div>
+      <div style="margin-top:12px">
+        <button class="btn btn-danger btn-sm" id="resetBtn">전체 기록 초기화</button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ───────────────── 상태 ───────────────── */
+const KEY = 'golf-club-data';
+let data = { members: [], rounds: [], settings: { hcpMode: 'manual' } };
+let rankMode = 'gross';
+let currentSeason = null;
+
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+
+/* ───────────────── 저장소 ───────────────── */
+async function loadData(){
+  try{
+    const r = await window.storage.get(KEY, true);
+    if(r && r.value) data = JSON.parse(r.value);
+  }catch(e){ /* 첫 실행: 저장된 기록 없음 */ }
+  if(!data.settings) data.settings = { hcpMode:'manual' };
+}
+async function saveData(){
+  try{
+    await window.storage.set(KEY, JSON.stringify(data), true);
+  }catch(e){
+    toast('저장에 실패했습니다. 네트워크를 확인해 주세요.');
+  }
+}
+
+/* ───────────────── 유틸 ───────────────── */
+function toast(msg){
+  const t = $('#toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(t._tm); t._tm = setTimeout(()=>t.classList.remove('show'), 2400);
+}
+function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+function gross(sc){ return (sc.front||0) + (sc.back||0); }
+function fmtDate(d){
+  const dt = new Date(d + 'T00:00:00');
+  return { d: dt.getDate(), m: (dt.getMonth()+1) + '월', y: dt.getFullYear() };
+}
+
+/* 핸디캡 (설정에 따라 수동/자동) */
+function handicapOf(memberId){
+  const m = data.members.find(x=>x.id===memberId);
+  if(!m) return 0;
+  if(data.settings.hcpMode === 'manual') return m.handicap || 0;
+  // 자동: 최근 5개 참석 라운드 평균
+  const played = data.rounds
+    .filter(r => r.scores[memberId])
+    .sort((a,b)=> b.date.localeCompare(a.date))
+    .slice(0,5);
+  if(!played.length) return m.handicap || 0;
+  const avg = played.reduce((s,r)=> s + gross(r.scores[memberId]), 0) / played.length;
+  return Math.max(0, Math.round((avg - 72) * 0.8));
+}
+
+/* 한 라운드의 순위 계산 → [{memberId, gross, hcp, net, rank}] */
+function roundRanking(round){
+  const rows = Object.keys(round.scores).map(id => {
+    const g = gross(round.scores[id]);
+    const h = handicapOf(id);
+    return { memberId:id, gross:g, hcp:h, net:g - h };
+  });
+  const key = rankMode === 'gross' ? 'gross' : 'net';
+  rows.sort((a,b)=> a[key] - b[key]);
+  let rank = 0, prev = null;
+  rows.forEach((r,i)=>{
+    if(prev === null || r[key] !== prev){ rank = i+1; prev = r[key]; }
+    r.rank = rank;
+  });
+  return rows;
+}
+/* 포인트 배점(넷 기준) */
+function roundPoints(round){
+  const saved = rankMode; rankMode = 'net';
+  const rows = roundRanking(round);
+  rankMode = saved;
+  const table = [10,7,5,3,1];
+  const pts = {};
+  rows.forEach(r => { pts[r.memberId] = table[Math.min(r.rank-1, 4)]; });
+  return pts;
+}
+
+/* ───────────────── 렌더: 순위표 ───────────────── */
+function seasonsAvailable(){
+  const ys = [...new Set(data.rounds.map(r => r.date.slice(0,4)))].sort().reverse();
+  return ys.length ? ys : [String(new Date().getFullYear())];
+}
+function renderSeasonSel(){
+  const sel = $('#seasonSel');
+  const ys = seasonsAvailable();
+  if(!currentSeason || !ys.includes(currentSeason)) currentSeason = ys[0];
+  sel.innerHTML = ys.map(y=>`<option value="${y}" ${y===currentSeason?'selected':''}>${y}년</option>`).join('');
+}
+function renderLeaderboard(){
+  renderSeasonSel();
+  const box = $('#leaderboard');
+  const rounds = data.rounds.filter(r => r.date.startsWith(currentSeason));
+  if(!data.members.length){
+    box.innerHTML = `<div class="empty"><div class="tee">⛳</div>먼저 <b>멤버 · 설정</b> 탭에서 멤버를 등록해 주세요.</div>`;
+    $('#rankNote').textContent = '';
+    return;
+  }
+  if(!rounds.length){
+    box.innerHTML = `<div class="empty"><div class="tee">🏌️</div>${currentSeason}년에 기록된 라운드가 아직 없습니다.<br><b>라운드 기록</b> 탭에서 첫 라운드를 입력해 보세요.</div>`;
+    $('#rankNote').textContent = '';
+    return;
+  }
+  // 시즌 집계
+  const stat = {};
+  data.members.forEach(m => stat[m.id] = { name:m.name, n:0, sumG:0, sumN:0, best:null, wins:0, pts:0 });
+  rounds.forEach(r => {
+    const ranking = roundRanking(r);
+    const pts = roundPoints(r);
+    ranking.forEach(row => {
+      const s = stat[row.memberId]; if(!s) return;
+      s.n++; s.sumG += row.gross; s.sumN += row.net;
+      if(s.best===null || row.gross < s.best) s.best = row.gross;
+      if(row.rank === 1) s.wins++;
+      s.pts += pts[row.memberId] || 0;
+    });
+  });
+  let rows = Object.entries(stat).filter(([,s])=>s.n>0).map(([id,s])=>({
+    id, ...s,
+    avgG: s.sumG/s.n, avgN: s.sumN/s.n, hcp: handicapOf(id)
+  }));
+  // 정렬 기준
+  if(rankMode==='gross') rows.sort((a,b)=> a.avgG - b.avgG);
+  else if(rankMode==='net') rows.sort((a,b)=> a.avgN - b.avgN);
+  else rows.sort((a,b)=> b.pts - a.pts || a.avgN - b.avgN);
+
+  let rank=0, prev=null;
+  rows.forEach((r,i)=>{
+    const k = rankMode==='gross'? r.avgG.toFixed(2) : rankMode==='net'? r.avgN.toFixed(2) : r.pts;
+    if(prev===null || k!==prev){ rank=i+1; prev=k; }
+    r.rank = rank;
+  });
+  const bestOfBest = Math.min(...rows.map(r=>r.best));
+  box.innerHTML = `
+  <div style="overflow-x:auto"><table>
+    <thead><tr>
+      <th>순위</th><th style="text-align:left">이름</th><th>라운드</th>
+      <th>평균${rankMode==='net'?'(넷)':''}</th><th class="hide-sm">핸디</th>
+      <th>베스트</th><th>우승</th><th>포인트</th>
+    </tr></thead>
+    <tbody>
+    ${rows.map(r=>`
+      <tr>
+        <td><span class="rank-badge rank-${r.rank<=3?r.rank:''} num">${r.rank}</span></td>
+        <td class="name">${esc(r.name)}</td>
+        <td class="num">${r.n}</td>
+        <td class="num" style="font-weight:700">${(rankMode==='net'? r.avgN : r.avgG).toFixed(1)}</td>
+        <td class="num hide-sm">${r.hcp}</td>
+        <td class="num ${r.best===bestOfBest?'best':''}">${r.best}</td>
+        <td class="num">${r.wins}</td>
+        <td class="num" style="font-weight:${rankMode==='point'?'800':'400'}">${r.pts}</td>
+      </tr>`).join('')}
+    </tbody>
+  </table></div>`;
+  $('#rankNote').textContent =
+    rankMode==='gross' ? '그로스: 시즌 평균 총타수가 낮은 순서입니다.' :
+    rankMode==='net'   ? '넷: 핸디캡을 뺀 평균 타수 기준입니다. 실력 차가 있어도 공정하게 겨룰 수 있습니다.' :
+                         '포인트: 매 라운드 넷 순위에 따라 적립된 점수 합계 기준입니다.';
+}
+
+/* ───────────────── 렌더: 라운드 입력/히스토리 ───────────────── */
+function renderScoreEntry(){
+  const box = $('#scoreEntry');
+  if(!data.members.length){
+    box.innerHTML = `<div class="empty">멤버를 먼저 등록하면 이곳에 점수 입력란이 나타납니다.</div>`;
+    return;
+  }
+  box.innerHTML = `
+  <div style="overflow-x:auto"><table class="score-input-table">
+    <thead><tr><th style="text-align:left">멤버</th><th>전반(OUT)</th><th>후반(IN)</th><th>합계</th></tr></thead>
+    <tbody>
+    ${data.members.map(m=>`
+      <tr data-mid="${m.id}">
+        <td class="name">${esc(m.name)}</td>
+        <td><input type="number" class="in-front" min="27" max="90" placeholder="—" inputmode="numeric"></td>
+        <td><input type="number" class="in-back" min="27" max="90" placeholder="—" inputmode="numeric"></td>
+        <td class="sum-cell">—</td>
+      </tr>`).join('')}
+    </tbody>
+  </table></div>`;
+  box.querySelectorAll('input').forEach(inp=>{
+    inp.addEventListener('input', e=>{
+      const tr = e.target.closest('tr');
+      const f = +tr.querySelector('.in-front').value || 0;
+      const b = +tr.querySelector('.in-back').value || 0;
+      tr.querySelector('.sum-cell').textContent = (f||b) ? f+b : '—';
+    });
+  });
+  if(!$('#rDate').value) $('#rDate').value = new Date().toISOString().slice(0,10);
+}
+
+function renderRoundList(){
+  const box = $('#roundList');
+  if(!data.rounds.length){
+    box.innerHTML = `<div class="empty"><div class="tee">📋</div>아직 저장된 라운드가 없습니다.</div>`;
+    return;
+  }
+  const sorted = [...data.rounds].sort((a,b)=> b.date.localeCompare(a.date));
+  box.innerHTML = sorted.map(r=>{
+    const saved = rankMode; rankMode='net';
+    const ranking = roundRanking(r);
+    rankMode = saved;
+    const winner = ranking.filter(x=>x.rank===1)
+      .map(x=> nameOf(x.memberId)).join(', ');
+    const dt = fmtDate(r.date);
+    return `
+    <div class="round-card" data-rid="${r.id}">
+      <button class="round-head" onclick="this.parentElement.classList.toggle('open')">
+        <div class="round-date"><div class="m">${dt.y}·${dt.m}</div><div class="d num">${dt.d}</div></div>
+        <div class="round-info">
+          <div class="round-course">${esc(r.course || '골프장 미기재')}</div>
+          <div class="round-winner">참석 ${ranking.length}명 · 우승 <b>${esc(winner)}</b> <span class="muted">(넷 기준)</span></div>
+        </div>
+        <div class="chev">▼</div>
+      </button>
+      <div class="round-body">
+        <div class="scoretable" style="overflow-x:auto"><table>
+          <thead><tr><th>순위</th><th style="text-align:left">이름</th><th>전반</th><th>후반</th><th>그로스</th><th>핸디</th><th>넷</th></tr></thead>
+          <tbody>
+          ${ranking.map(x=>{
+            const sc = r.scores[x.memberId];
+            return `<tr>
+              <td><span class="rank-badge rank-${x.rank<=3?x.rank:''} num" style="width:26px;height:26px;font-size:12.5px">${x.rank}</span></td>
+              <td class="name">${esc(nameOf(x.memberId))}</td>
+              <td class="num">${sc.front}</td><td class="num">${sc.back}</td>
+              <td class="num" style="font-weight:800">${x.gross}</td>
+              <td class="num muted">${x.hcp}</td>
+              <td class="num" style="font-weight:700;color:var(--fairway)">${x.net}</td>
+            </tr>`;
+          }).join('')}
+          </tbody>
+        </table></div>
+        <div class="round-actions">
+          <button class="btn btn-danger btn-sm" onclick="deleteRound('${r.id}')">이 라운드 삭제</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* ───────────────── 렌더: 멤버 ───────────────── */
+function renderMembers(){
+  const box = $('#memberList');
+  if(!data.members.length){
+    box.innerHTML = `<div class="empty">등록된 멤버가 없습니다. 아래에서 모임 멤버를 추가해 주세요.</div>`;
+  }else{
+    box.innerHTML = data.members.map(m=>`
+      <div class="member-row">
+        <div class="avatar">${esc(m.name.slice(0,1))}</div>
+        <div class="member-name">${esc(m.name)}</div>
+        <div>
+          <label style="margin-bottom:2px;font-size:10.5px">핸디</label>
+          <input type="number" class="hcp-input num" value="${m.handicap||0}" min="0" max="54"
+                 onchange="updateHcp('${m.id}', this.value)">
+        </div>
+        <button class="btn btn-danger btn-sm" onclick="deleteMember('${m.id}')">삭제</button>
+      </div>`).join('');
+  }
+  // 핸디 방식 pill
+  $$('#hcpPill button').forEach(b=>{
+    b.classList.toggle('on', b.dataset.hcp === data.settings.hcpMode);
+  });
+  $('#headSub').textContent = data.members.length
+    ? `${data.members.map(m=>m.name).join(' · ')} — 함께 기록하는 시즌 랭킹`
+    : '함께 기록하고, 함께 겨루는 우리 모임의 시즌 랭킹';
+}
+
+function nameOf(id){ const m = data.members.find(x=>x.id===id); return m? m.name : '(탈퇴)'; }
+function esc(s){ return String(s??'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+function renderAll(){
+  renderLeaderboard();
+  renderScoreEntry();
+  renderRoundList();
+  renderMembers();
+}
+
+/* ───────────────── 동작 ───────────────── */
+async function addMember(){
+  const name = $('#newName').value.trim();
+  const hcp = Math.max(0, Math.min(54, +$('#newHcp').value || 0));
+  if(!name){ toast('이름을 입력해 주세요.'); return; }
+  if(data.members.some(m=>m.name===name)){ toast('같은 이름의 멤버가 이미 있습니다.'); return; }
+  data.members.push({ id:uid(), name, handicap:hcp });
+  $('#newName').value=''; $('#newHcp').value='0';
+  await saveData(); renderAll();
+  toast(`${name} 님을 추가했습니다.`);
+}
+window.updateHcp = async function(id, v){
+  const m = data.members.find(x=>x.id===id); if(!m) return;
+  m.handicap = Math.max(0, Math.min(54, +v||0));
+  await saveData(); renderLeaderboard(); renderRoundList();
+  toast('핸디캡을 수정했습니다.');
+};
+window.deleteMember = async function(id){
+  const m = data.members.find(x=>x.id===id); if(!m) return;
+  const played = data.rounds.some(r=>r.scores[id]);
+  const msg = played
+    ? `${m.name} 님의 과거 라운드 기록도 함께 삭제됩니다. 계속할까요?`
+    : `${m.name} 님을 삭제할까요?`;
+  if(!confirm(msg)) return;
+  data.members = data.members.filter(x=>x.id!==id);
+  data.rounds.forEach(r=>{ delete r.scores[id]; });
+  data.rounds = data.rounds.filter(r=> Object.keys(r.scores).length>0);
+  await saveData(); renderAll();
+  toast('삭제했습니다.');
+};
+async function saveRound(){
+  const date = $('#rDate').value;
+  const course = $('#rCourse').value.trim();
+  if(!date){ toast('날짜를 선택해 주세요.'); return; }
+  const scores = {};
+  let bad = false;
+  $$('#scoreEntry tr[data-mid]').forEach(tr=>{
+    const f = tr.querySelector('.in-front').value;
+    const b = tr.querySelector('.in-back').value;
+    if(f==='' && b==='') return;              // 불참
+    if(f==='' || b===''){ bad = true; return; } // 반쪽 입력
+    scores[tr.dataset.mid] = { front:+f, back:+b };
+  });
+  if(bad){ toast('전반·후반을 모두 입력하거나 둘 다 비워 주세요.'); return; }
+  if(Object.keys(scores).length < 2){ toast('두 명 이상의 점수가 필요합니다.'); return; }
+  data.rounds.push({ id:uid(), date, course, scores });
+  await saveData();
+  $('#rCourse').value='';
+  renderAll();
+  toast('라운드를 저장했습니다. 순위표에 반영됐어요!');
+}
+window.deleteRound = async function(id){
+  if(!confirm('이 라운드 기록을 삭제할까요?')) return;
+  data.rounds = data.rounds.filter(r=>r.id!==id);
+  await saveData(); renderAll();
+  toast('라운드를 삭제했습니다.');
+};
+async function resetAll(){
+  if(!confirm('멤버와 모든 라운드 기록이 삭제됩니다. 정말 초기화할까요?')) return;
+  if(!confirm('삭제된 기록은 복구할 수 없습니다. 진행할까요?')) return;
+  data = { members:[], rounds:[], settings:{ hcpMode:'manual' } };
+  await saveData(); renderAll();
+  toast('모든 기록을 초기화했습니다.');
+}
+
+/* ───────────────── 이벤트 ───────────────── */
+$$('.tab').forEach(t=>{
+  t.addEventListener('click', ()=>{
+    $$('.tab').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    $$('main section').forEach(s=>s.classList.remove('show'));
+    $('#tab-'+t.dataset.tab).classList.add('show');
+  });
+});
+$$('#modePill button').forEach(b=>{
+  b.addEventListener('click', ()=>{
+    $$('#modePill button').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on');
+    rankMode = b.dataset.mode;
+    renderLeaderboard(); renderRoundList();
+  });
+});
+$$('#hcpPill button').forEach(b=>{
+  b.addEventListener('click', async ()=>{
+    data.settings.hcpMode = b.dataset.hcp;
+    await saveData(); renderAll();
+    toast(b.dataset.hcp==='auto' ? '자동 핸디캡으로 전환했습니다.' : '수동 핸디캡으로 전환했습니다.');
+  });
+});
+$('#seasonSel').addEventListener('change', e=>{ currentSeason = e.target.value; renderLeaderboard(); });
+$('#addMemberBtn').addEventListener('click', addMember);
+$('#newName').addEventListener('keydown', e=>{ if(e.key==='Enter') addMember(); });
+$('#saveRoundBtn').addEventListener('click', saveRound);
+$('#resetBtn').addEventListener('click', resetAll);
+
+/* ───────────────── 시작 ───────────────── */
+(async ()=>{
+  await loadData();
+  $('#loading').style.display='none';
+  $('#tab-rank').classList.add('show');
+  renderAll();
+})();
+</script>
+</body>
+</html>
