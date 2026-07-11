@@ -1,1 +1,0 @@
-# birdiebuddy_golf
